@@ -16,9 +16,9 @@
 # next.js
 /.next/
 /out/
-/next.config.js
-/package-lock.json
-/next.config.mjs
+next.config.js
+package-lock.json
+next.config.mjs
 # production
 /build
 
