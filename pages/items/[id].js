@@ -8,18 +8,45 @@ import Header from '@/components/Header';
 import Container from '@/components/Container';
 import instance from '@/lib/axios';
 import Image from 'next/image';
+import NotFound from '../404';
+import LoadingSpinner from '@/components/LoadingSinpper';
 
-export default function Product() {
-  const [product, setProduct] = useState();
+export async function getStaticPaths() {
+  const res = await instance.get('/products/');
+  const products = res.data.results;
+  const paths = products.map((product) => ({
+    params: { id: String(product.id) },
+  }))
+
+  return {
+    paths,
+    fallback: true,
+  }
+}
+
+export async function getStaticProps(context) {
+  const productId = context.params['id'];
+  let product;
+  try {
+    const res = await instance.get(`/products/${productId}`);
+    product = res.data;
+  }
+  catch {
+    return {
+      notFound: true,
+    }
+  }
+  return {
+    props: {
+      product,
+    }
+  }
+}
+
+export default function Product({ product }) {
   const [sizeReviews, setSizeReviews] = useState([]);
   const router = useRouter();
   const { id } = router.query;
-
-  async function getProduct(targetId) {
-    const res = await instance.get(`/products/${targetId}`);
-    const nextProduct = res.data;
-    setProduct(nextProduct);
-  }
 
   async function getSizeReviews(targetId) {
     const res = await instance.get(`/size_reviews/?product_id=${targetId}`);
@@ -30,11 +57,15 @@ export default function Product() {
   useEffect(() => {
     if (!id) return;
 
-    getProduct(id);
+
     getSizeReviews(id);
   }, [id]);
 
-  if (!product) return null;
+  if (!product) return (
+    <div className={styles.loading}>
+      <LoadingSpinner />
+    </div>
+  );
 
   return (
     <>
